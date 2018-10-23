@@ -5,7 +5,7 @@ This program will convert Basic code to B-code which will be easy to interpret.
 
 # Requirement
 - make
-- A working haskell compiler (ghc is preferred otherwise you have to build it yourself)
+- A working haskell compiler (ghc is preferred otherwise you have to build the project yourself)
 
 # Installation
 
