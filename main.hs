@@ -1,4 +1,7 @@
 import Data.List
+
+import System.Environment
+import System.Exit
 import System.IO
 
 import Scanner
@@ -10,10 +13,14 @@ main :: IO()
 main = do
   
   -- get input information
-  hPutStr stderr "Input file name: "
-  hFlush stderr 
-  fileName <- getLine
-  
+  args <- getArgs
+
+  fileName <- case args of
+    [a] -> return a
+    _ -> do
+      hPutStrLn stderr "usage: ./main [input_file]"
+      exitFailure 
+
   -- read input file
   hPutStrLn stderr $ "#### Reading from " ++ (show fileName) ++ " ####"
   input <- readFile fileName

@@ -12,6 +12,10 @@ This program will convert Basic code to B-code which will be easy to interpret.
 
 run `make`
 
+# Usage
+
+run `./main [input_file]`
+
 # Description of Retro Basic
 https://www.cp.eng.chula.ac.th/~piak/teaching/prolang/2018/retro-basic.htm
 
