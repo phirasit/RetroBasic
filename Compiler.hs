@@ -75,7 +75,6 @@ toBCodeInline (Parser.Term _) = assert False []
 toBCodeInline (Parser.If ast1 (Scanner.Const n)) = showIfCode ++ (toBCodeInline ast1) ++ (showGotoCode n)
 toBCodeInline (Parser.If _ _) = assert False []
 
-
 toBCodeInline (Parser.Cond ast1 op ast2) = (toBCodeInline ast1) ++ (showOpCode op) ++ (toBCodeInline ast2) 
 
 toBCodeInline (Parser.Print (Scanner.Id c)) = showPrintCode ++ (showIdCode c)
@@ -87,6 +86,8 @@ toBCodeInline (Parser.Goto _) = assert False []
 toBCodeInline Parser.Stop = showStopCode
 
 toBCodeInline _ = assert False []
+
+
 
 -- Compiler API 
 toBCode :: AST -> [[Int]]
