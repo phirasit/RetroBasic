@@ -10,11 +10,13 @@ data AST = Null
   | Line Token AST
   | Stmt AST
   | Asgmnt Token Token AST
-  | Exp1 AST
-  | Exp2 AST Token AST
+  | Exp1 AST AST
+  | Exp21
+  | Exp22 Token AST
   | Term Token
   | If AST Token
-  | Cond AST Token AST
+  | Cond1 AST AST
+  | Cond2 Token AST
   | Print Token
   | Goto Token
   | Stop
@@ -24,10 +26,12 @@ data NonTerminal = PGM
   | LINE
   | STMT
   | ASGMNT
-  | EXP
+  | EXP1
+  | EXP2
   | TERM
   | IF
-  | COND
+  | COND1
+  | COND2
   | PRINT
   | GOTO
   | STOP
@@ -64,14 +68,14 @@ createAST :: NonTerminal -> [Token] -> (AST, [Token])
 
 -- pgm := line pgm | EOF
 createAST PGM [] = (Null, [])
-createAST PGM tokens@((Scanner.Const lineNum):_) = (Parser.Pgm ast1 ast2, tokens'')
+createAST PGM tokens@((Scanner.Const _):_) = (Parser.Pgm ast1 ast2, tokens'')
   where 
     (ast1, tokens') = createAST LINE tokens
     (ast2, tokens'') = createAST PGM tokens'
 createAST PGM _ = assert False (Null, [])
 
 -- line := line_num stmt
-createAST LINE (n:tokens) = assert (isLineNum n) (Parser.Line n ast, tokens')
+createAST LINE (lineNum@(Scanner.Const _):tokens) = assert (isLineNum lineNum) (Parser.Line lineNum ast, tokens')
   where (ast, tokens') = createAST STMT tokens
 createAST LINE _ = assert False (Null, [])
 
@@ -88,35 +92,48 @@ createAST STMT tokens@(Scanner.Stop:_) = (Parser.Stmt ast, tokens')
   where (ast, tokens') = createAST STOP tokens
 createAST STMT _ = assert False (Null, [])
 
--- asgmnt := id = exp
+-- asgmnt := id = exp1
 createAST ASGMNT (c:Scanner.Equal:tokens) = assert (isId c) (Parser.Asgmnt c Scanner.Equal ast, tokens')
-  where (ast, tokens') = createAST EXP tokens
+  where (ast, tokens') = createAST EXP1 tokens
 createAST ASGMNT _ = assert False (Null, [])
 
--- exp := term | term + term | term - term
-createAST EXP tokens
-  | null tokens' || (not . isArithmeticOp) op = (Parser.Exp1 ast1, tokens') 
-  | otherwise = (Parser.Exp2 ast1 op ast2, tokens''')
-  where
+-- exp1 := term exp2 
+createAST EXP1 tokens = (Parser.Exp1 ast1 ast2, tokens'')
+  where 
     (ast1, tokens') = createAST TERM tokens
-    (op:tokens'') = tokens'
-    (ast2, tokens''') = createAST TERM tokens''
+    (ast2, tokens'') = createAST EXP2 tokens'
+
+-- exp2 := empty | + term | - term
+createAST EXP2 [] = (Parser.Exp21, [])
+createAST EXP2 tokens@((Scanner.Const _):_) = (Parser.Exp21, tokens)
+createAST EXP2 (Scanner.Plus:tokens) = (Parser.Exp22 Scanner.Plus ast, tokens')
+  where (ast, tokens') = createAST TERM tokens
+createAST EXP2 (Scanner.Minus:tokens) = (Parser.Exp22 Scanner.Minus ast, tokens')
+  where (ast, tokens') = createAST TERM tokens
+createAST EXP2 _ = assert False (Null, [])
 
 -- term := id | const
 createAST TERM (c:tokens) = assert (isTerm c) (Parser.Term c, tokens)
 createAST TERM _ = assert False (Null, [])
 
--- if := IF cond line_num
+-- if := IF cond1 line_num
 createAST IF (Scanner.If:tokens) = assert (isLineNum lineNum) (Parser.If ast lineNum, tokens')
-  where (ast, (lineNum:tokens')) = createAST COND tokens
+  where (ast, (lineNum:tokens')) = createAST COND1 tokens
 createAST IF _ = assert False (Null, [])
 
--- cond := term < term | term = term
-createAST COND tokens@(c:op:tokens') = assert (isTerm c && isComparator op) (Parser.Cond ast1 op ast2, tokens'')
+-- cond1 :- term cond2
+createAST COND1 tokens@((Scanner.Const _):_) = (Parser.Cond1 ast1 ast2, tokens'')
   where
-    (ast1, _) = createAST TERM tokens
-    (ast2, tokens'') = createAST TERM tokens'
-createAST COND _ = assert False (Null, [])
+    (ast1, tokens') = createAST TERM tokens
+    (ast2, tokens'') = createAST COND2 tokens'
+createAST COND1 _ = assert False (Null, [])
+
+-- cond2 :- < term | = term
+createAST COND2 (Scanner.Less:tokens) = (Parser.Cond2 Scanner.Less ast, tokens')
+  where (ast, tokens') = createAST TERM tokens
+createAST COND2 (Scanner.Equal:tokens) = (Parser.Cond2 Scanner.Equal ast, tokens')
+  where (ast, tokens') = createAST TERM tokens
+createAST COND2 _ = assert False (Null, [])
 
 -- print := PRINT id
 createAST PRINT (Scanner.Print:c:tokens) = assert (isId c) (Parser.Print c, tokens)
@@ -133,6 +150,6 @@ createAST STOP _ = assert False (Null, [])
 
 --- Parser API ---
 parse :: [Token] -> AST
-parse tokens = assert (length tokens' == 0) ast
+parse tokens = assert (null tokens') ast
   where (ast, tokens') = createAST PGM tokens
 

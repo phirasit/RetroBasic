@@ -65,8 +65,9 @@ toBCodeInline (Parser.Stmt ast1) = toBCodeInline ast1
 toBCodeInline (Parser.Asgmnt (Scanner.Id c) Scanner.Equal ast1) = (showIdCode c) ++ (showOpCode Scanner.Equal) ++ (toBCodeInline ast1)
 toBCodeInline (Parser.Asgmnt _ _ _) = assert False []
 
-toBCodeInline (Parser.Exp1 ast1) = toBCodeInline ast1
-toBCodeInline (Parser.Exp2 ast1 op ast2) = (toBCodeInline ast1) ++ (showOpCode op) ++ (toBCodeInline ast2)
+toBCodeInline (Parser.Exp1 ast1 ast2) = (toBCodeInline ast1) ++ (toBCodeInline ast2)
+toBCodeInline (Parser.Exp21) =  []
+toBCodeInline (Parser.Exp22 op ast1) = (showOpCode op) ++ (toBCodeInline ast1)
 
 toBCodeInline (Parser.Term (Scanner.Id c)) = showIdCode c
 toBCodeInline (Parser.Term (Scanner.Const n)) = showConstCode n
@@ -75,7 +76,8 @@ toBCodeInline (Parser.Term _) = assert False []
 toBCodeInline (Parser.If ast1 (Scanner.Const n)) = showIfCode ++ (toBCodeInline ast1) ++ (showGotoCode n)
 toBCodeInline (Parser.If _ _) = assert False []
 
-toBCodeInline (Parser.Cond ast1 op ast2) = (toBCodeInline ast1) ++ (showOpCode op) ++ (toBCodeInline ast2) 
+toBCodeInline (Parser.Cond1 ast1 ast2) = (toBCodeInline ast1) ++ (toBCodeInline ast2) 
+toBCodeInline (Parser.Cond2 op ast) = (showOpCode op) ++ (toBCodeInline ast) 
 
 toBCodeInline (Parser.Print (Scanner.Id c)) = showPrintCode ++ (showIdCode c)
 toBCodeInline (Parser.Print _) = assert False []
