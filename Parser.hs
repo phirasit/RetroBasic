@@ -1,6 +1,5 @@
 module Parser (AST(..), parse) where
 
-import Control.Exception.Base
 import Data.Char (isUpper)
 
 import Scanner
@@ -72,12 +71,14 @@ createAST PGM tokens@((Scanner.Const _):_) = (Parser.Pgm ast1 ast2, tokens'')
   where 
     (ast1, tokens') = createAST LINE tokens
     (ast2, tokens'') = createAST PGM tokens'
-createAST PGM _ = assert False (Null, [])
+createAST PGM tokens = error $ "Parser: Invalid PGM " ++ (show tokens)
 
 -- line := line_num stmt
-createAST LINE (lineNum@(Scanner.Const _):tokens) = assert (isLineNum lineNum) (Parser.Line lineNum ast, tokens')
+createAST LINE (lineNum@(Scanner.Const _):tokens) 
+  | isLineNum lineNum = (Parser.Line lineNum ast, tokens')
+  | otherwise = error $ "Parser: Invalid LINE " ++ (show lineNum)
   where (ast, tokens') = createAST STMT tokens
-createAST LINE _ = assert False (Null, [])
+createAST LINE tokens = error $ "Parser: Invalid LINE " ++ (show tokens)
 
 -- stmt := asgmnt | if | print | goto | stop
 createAST STMT tokens@((Scanner.Id _):_) = (Parser.Stmt ast, tokens')
@@ -90,18 +91,23 @@ createAST STMT tokens@(Scanner.Goto:_) = (Parser.Stmt ast, tokens')
   where (ast, tokens') = createAST GOTO tokens  
 createAST STMT tokens@(Scanner.Stop:_) = (Parser.Stmt ast, tokens')
   where (ast, tokens') = createAST STOP tokens
-createAST STMT _ = assert False (Null, [])
+createAST STMT tokens = error $ "Parser: Invalid STMT " ++ (show tokens)
 
 -- asgmnt := id = exp1
-createAST ASGMNT (c:Scanner.Equal:tokens) = assert (isId c) (Parser.Asgmnt c Scanner.Equal ast, tokens')
+createAST ASGMNT (c:Scanner.Equal:tokens) 
+  | isId c = (Parser.Asgmnt c Scanner.Equal ast, tokens')
+  | otherwise = error $ "Parser: Invalid ASGMNT " ++ (show c)
   where (ast, tokens') = createAST EXP1 tokens
-createAST ASGMNT _ = assert False (Null, [])
+createAST ASGMNT tokens = error $ "Parser: Invalid ASGMNT " ++ (show tokens)
 
 -- exp1 := term exp2 
-createAST EXP1 tokens = (Parser.Exp1 ast1 ast2, tokens'')
+createAST EXP1 tokens@(c:_) 
+  | isTerm c = (Parser.Exp1 ast1 ast2, tokens'') 
+  | otherwise = error $ "Parser: Invalid EXP1 " ++ (show c)
   where 
     (ast1, tokens') = createAST TERM tokens
     (ast2, tokens'') = createAST EXP2 tokens'
+createAST EXP1 tokens = error $ "Parser: Invalid EXP1 " ++ (show tokens)
 
 -- exp2 := empty | + term | - term
 createAST EXP2 [] = (Parser.Exp21, [])
@@ -110,46 +116,56 @@ createAST EXP2 (Scanner.Plus:tokens) = (Parser.Exp22 Scanner.Plus ast, tokens')
   where (ast, tokens') = createAST TERM tokens
 createAST EXP2 (Scanner.Minus:tokens) = (Parser.Exp22 Scanner.Minus ast, tokens')
   where (ast, tokens') = createAST TERM tokens
-createAST EXP2 _ = assert False (Null, [])
+createAST EXP2 tokens = error $ "Parser: Invalid EXP2 " ++ (show tokens)
 
 -- term := id | const
-createAST TERM (c:tokens) = assert (isTerm c) (Parser.Term c, tokens)
-createAST TERM _ = assert False (Null, [])
+createAST TERM (c:tokens) 
+  | isTerm c = (Parser.Term c, tokens)
+  | otherwise = error $ "Parser: Invalid TERM " ++ (show c)
+createAST TERM tokens = error $ "Parser: Invalid TERM " ++ (show tokens)
 
 -- if := IF cond1 line_num
-createAST IF (Scanner.If:tokens) = assert (isLineNum lineNum) (Parser.If ast lineNum, tokens')
+createAST IF (Scanner.If:tokens)
+  | isLineNum lineNum = (Parser.If ast lineNum, tokens')
+  | otherwise = error $ "Parser: Invalid If " ++ (show lineNum)
   where (ast, (lineNum:tokens')) = createAST COND1 tokens
-createAST IF _ = assert False (Null, [])
+createAST IF tokens = error $ "Parser: Invalid IF " ++ (show tokens)
 
 -- cond1 :- term cond2
 createAST COND1 tokens@((Scanner.Const _):_) = (Parser.Cond1 ast1 ast2, tokens'')
   where
     (ast1, tokens') = createAST TERM tokens
     (ast2, tokens'') = createAST COND2 tokens'
-createAST COND1 _ = assert False (Null, [])
+createAST COND1 tokens = error $ "Parser: Invalid COND1 " ++ (show tokens)
 
 -- cond2 :- < term | = term
 createAST COND2 (Scanner.Less:tokens) = (Parser.Cond2 Scanner.Less ast, tokens')
   where (ast, tokens') = createAST TERM tokens
 createAST COND2 (Scanner.Equal:tokens) = (Parser.Cond2 Scanner.Equal ast, tokens')
   where (ast, tokens') = createAST TERM tokens
-createAST COND2 _ = assert False (Null, [])
+createAST COND2 tokens = error $ "Parser: Invalid COND2 " ++ (show tokens)
 
 -- print := PRINT id
-createAST PRINT (Scanner.Print:c:tokens) = assert (isId c) (Parser.Print c, tokens)
-createAST PRINT _ = assert False (Null, [])
+createAST PRINT (Scanner.Print:c:tokens) 
+  | isId c = (Parser.Print c, tokens)
+  | otherwise = error $ "Parser: Invalid PRINT " ++ (show c)
+createAST PRINT tokens = error $ "Parser: Invalid PRINT " ++ (show tokens)
 
 -- goto := GOTO line_num
-createAST GOTO (Scanner.Goto:lineNum:tokens) = assert (isLineNum lineNum) (Parser.Goto lineNum, tokens)
-createAST GOTO _ = assert False (Null, [])
+createAST GOTO (Scanner.Goto:lineNum:tokens)
+  | isLineNum lineNum = (Parser.Goto lineNum, tokens)
+  | otherwise = error $ "Parser: Invalid GOTO " ++ (show lineNum)
+createAST GOTO tokens = error $ "Parser: Invalid GOTO "++ (show tokens)
 
 -- stop := STOP
 createAST STOP (Scanner.Stop:tokens) = (Parser.Stop, tokens)
-createAST STOP _ = assert False (Null, [])
+createAST STOP tokens = error $ "Parser: Invalid STOP " ++ (show tokens)
 
 
 --- Parser API ---
 parse :: [Token] -> AST
-parse tokens = assert (null tokens') ast
+parse tokens 
+  | null tokens' = ast
+  | otherwise = error $ "Parser: Invalid parse " ++ (show tokens) ++ "\nLeft with:" ++ (show tokens')
   where (ast, tokens') = createAST PGM tokens
 

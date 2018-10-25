@@ -1,6 +1,5 @@
 module Compiler (toBCode) where
 
-import Control.Exception.Base
 import Data.Char (ord)
 
 import Scanner
@@ -51,19 +50,19 @@ showOpCode Scanner.Plus = opCode : [opPlusCode]
 showOpCode Scanner.Minus = opCode : [opMinusCode]
 showOpCode Scanner.Less = opCode : [opLessCode]
 showOpCode Scanner.Equal = opCode : [opEqualCode]
-showOpCode _ = assert False []
+showOpCode op = error $ "Invalid opCode: " ++ (show op)
 
 
 
 toBCodeInline :: AST -> [Int]
 
 toBCodeInline (Parser.Line (Scanner.Const n) ast1) = lineCode : n : (toBCodeInline ast1)
-toBCodeInline (Parser.Line _ _) = assert False []
+toBCodeInline (Parser.Line token _) = error $ "Compiler: Invalid Line " ++ (show token)
 
 toBCodeInline (Parser.Stmt ast1) = toBCodeInline ast1
 
 toBCodeInline (Parser.Asgmnt (Scanner.Id c) Scanner.Equal ast1) = (showIdCode c) ++ (showOpCode Scanner.Equal) ++ (toBCodeInline ast1)
-toBCodeInline (Parser.Asgmnt _ _ _) = assert False []
+toBCodeInline (Parser.Asgmnt _ _ _) = error "Compiler: Invalid Asgmnt"
 
 toBCodeInline (Parser.Exp1 ast1 ast2) = (toBCodeInline ast1) ++ (toBCodeInline ast2)
 toBCodeInline (Parser.Exp21) =  []
@@ -71,23 +70,23 @@ toBCodeInline (Parser.Exp22 op ast1) = (showOpCode op) ++ (toBCodeInline ast1)
 
 toBCodeInline (Parser.Term (Scanner.Id c)) = showIdCode c
 toBCodeInline (Parser.Term (Scanner.Const n)) = showConstCode n
-toBCodeInline (Parser.Term _) = assert False []
+toBCodeInline (Parser.Term token) = error $ "Compiler: Invalid Term " ++ (show token)
 
 toBCodeInline (Parser.If ast1 (Scanner.Const n)) = showIfCode ++ (toBCodeInline ast1) ++ (showGotoCode n)
-toBCodeInline (Parser.If _ _) = assert False []
+toBCodeInline (Parser.If _ token) = error $ "Compiler: Invalid If " ++ (show token)
 
 toBCodeInline (Parser.Cond1 ast1 ast2) = (toBCodeInline ast1) ++ (toBCodeInline ast2) 
 toBCodeInline (Parser.Cond2 op ast) = (showOpCode op) ++ (toBCodeInline ast) 
 
 toBCodeInline (Parser.Print (Scanner.Id c)) = showPrintCode ++ (showIdCode c)
-toBCodeInline (Parser.Print _) = assert False []
+toBCodeInline (Parser.Print token) = error $ "Compiler: Invalid Print " ++ (show token)
 
 toBCodeInline (Parser.Goto (Scanner.Const n)) = showGotoCode n
-toBCodeInline (Parser.Goto _) = assert False []
+toBCodeInline (Parser.Goto token) = error $ "Compiler: Invalid Goto " ++ (show token)
 
 toBCodeInline Parser.Stop = showStopCode
 
-toBCodeInline _ = assert False []
+toBCodeInline ast = error $ "Compiler: Invalid AST " ++ (show ast)
 
 
 
@@ -98,6 +97,6 @@ toBCode (Parser.Pgm ast1 ast2) = (toBCodeInline ast1) : (toBCode ast2)
 
 toBCode Parser.Null = [[0]]
 
-toBCode _ = assert False []
+toBCode ast = error $ "Compiler: Invalid AST " ++ (show ast)
 
 

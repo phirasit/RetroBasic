@@ -29,7 +29,10 @@ tokenize "<" = Less
 tokenize "=" = Equal
 tokenize w@(x:xs) 
   | isDigit x = Const $ (read :: String -> Int) w 
-  | isUpper x && xs == [] = Id x
+  | isUpper x && null xs = Id x
+  | otherwise = error $ "Scanner: Token Unrecognize " ++ (show x) ++ " " ++ (show xs)
+
+tokenize t = error $ "Scanner: Token Unrecognize " ++ (show t)
 
 scan :: String -> [Token]
 scan w = map tokenize $ filter (/="") $ map trim $ words w
