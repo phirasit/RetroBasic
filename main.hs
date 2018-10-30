@@ -6,7 +6,7 @@ import System.IO
 
 import Scanner
 import Parser
-import Compiler
+import Emitter
 
 main :: IO() 
 

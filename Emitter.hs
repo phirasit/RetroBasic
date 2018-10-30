@@ -1,4 +1,4 @@
-module Compiler (toBCode) where
+module Emitter (toBCode) where
 
 import Data.Char (ord)
 
