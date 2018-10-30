@@ -1,6 +1,6 @@
 # RetroBasic
 
-Retro Basic is a Microsoft Basic compiler written in haskell. 
+Retro Basic is a Microsoft Basic compiler written in haskell.  
 This program will convert Basic code to B-code which will be easy to interpret.  
 All the information can be read from [Report.pdf](Report.pdf)
 
