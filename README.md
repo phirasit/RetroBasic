@@ -1,22 +1,23 @@
 # RetroBasic
 
 Retro Basic is a Microsoft Basic compiler written in haskell. 
-This program will convert Basic code to B-code which will be easy to interpret.
+This program will convert Basic code to B-code which will be easy to interpret.  
+All the information can be read from [Report.pdf](Report.pdf)
 
-# Requirement
+## Requirement
 - make
 - A working c compiler (gcc is preferred).
 - A working haskell compiler (ghc is preferred).
 
-# Installation
+## Installation
 
 run `make`
 
-# Usage
+## Usage
 
 run `./main [input_file]`
 
-# Description of Retro Basic
+## Description of Retro Basic
 https://www.cp.eng.chula.ac.th/~piak/teaching/prolang/2018/retro-basic.htm
 
 in the memory of Microsoft Basic (4K Basic)
