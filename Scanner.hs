@@ -1,4 +1,4 @@
-module Scanner where
+module Scanner (Token(..), scan) where
 
 import Data.Char (isDigit, isSpace, isUpper)
 
